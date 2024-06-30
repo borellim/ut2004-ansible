@@ -1,0 +1,13 @@
+all:
+  vars:
+    tier: production
+
+ut2004_servers:
+  hosts:
+    my-ut2004-host:
+      ansible_host: XX.XX.XX.XX
+      ansible_user: ubuntu
+      ansible_ssh_private_key_file: ./keys/ssh_private_key
+      ansible_ssh_common_args: -o StrictHostKeyChecking=no
+
+# Note: ansible_port and ansible_sudo_pass are set in secrets.yml

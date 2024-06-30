@@ -1,0 +1,17 @@
+[ut2004]
+title=Unreal Tournament 2004 Game / Query
+description=Game and Query ports
+ports=7777,7778,7787,10777/udp
+
+[ut2004-webadmin]
+title=Unreal Tournament 2004 Web Admin
+description=Web admin ports
+ports=8075/tcp
+
+# Ports:
+# 7777 UDP (Game port)
+# 7778 UDP (Query port)
+# 7787 UDP (GameSpy Query port)
+# 10777 UDP (LAN port)
+# 8075 TCP (Web Admin)
+# (not included) 28902 TCP (Allows your server to connect to the UT2004 Master Server Browser)

@@ -1,0 +1,26 @@
+---
+- name: Set timezone to Europe/Zurich
+  become: true
+  community.general.timezone:
+    name: Europe/Zurich
+  register: tz_res
+
+- name: Restart cron service to apply new timezone
+  become: true
+  ansible.builtin.service:
+    name: cron
+    state: restarted
+  when: tz_res.changed
+
+# TODO: setup email forwarding to enable cron mail below
+
+# - name: warn, if admin_email is not set
+#   debug:
+#     msg: "WARNING: please set admin_email to a personal email address"
+#   when:  admin_emails is not defined or admin_emails[0] == 'generic_email@gmail.com'
+
+# - name: set up cron email forwarding
+#   become: True
+#   copy:
+#     content: "{{ admin_emails | join(',') }}"
+#     dest: /root/.forward

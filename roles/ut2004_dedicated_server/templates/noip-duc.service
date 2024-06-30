@@ -1,0 +1,14 @@
+[Unit]
+Description=No-IP Dynamic Update Client
+After=network.target auditd.service
+
+[Service]
+EnvironmentFile=/home/{{ ansible_user }}/noip/noip-duc.env
+ExecStart=/home/{{ ansible_user }}/noip/noip-duc
+User={{ ansible_user }}
+Group={{ ansible_user }}
+Restart=on-failure
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

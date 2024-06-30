@@ -1,0 +1,70 @@
+- name: Implement firewall rules
+  tags: ufw
+  block:
+
+    - name: Set default UFW policy
+      become: true
+      community.general.ufw:
+        policy: "{{ item.policy }}"
+        direction: "{{ item.direction }}"
+      with_items:
+        - policy: deny
+          direction: incoming
+        - policy: allow
+          direction: outgoing
+        - policy: reject
+          direction: routed
+
+    - name: Upload UT2004 application profile to UFW
+      become: true
+      ansible.builtin.copy:
+        src: "ufw_app_ut2004"
+        dest: "/etc/ufw/applications.d/ut2004"
+        mode: "0600"
+        owner: root
+        group: root
+      register: ufw_app_profile
+
+    - name: Update UFW application profile
+      become: true
+      ansible.builtin.shell:
+        cmd: "ufw app update ut2004 && ufw app update ut2004-webadmin"
+      changed_when: ufw_app_profile.changed
+
+    - name: Allow UT2004 through UFW
+      become: true
+      community.general.ufw:
+        rule: allow
+        app: "{{ item }}"
+      with_items:
+        - ut2004
+        - ut2004-webadmin
+
+    # Always allow port 22 in case the custom port configuration
+    # breaks, otherwise we would lose access.
+    - name: Allow SSH through UFW (port 22)
+      become: true
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    # In addition, we allow the custom port if it's not 22
+    - name: Allow SSH through UFW (port {{ ansible_port }})
+      become: true
+      community.general.ufw:
+        rule: allow
+        port: "{{ ansible_port }}"
+        proto: tcp
+      when: ansible_port != 22
+
+    # We don't set "ufw limit ssh" or "ufw limit {{ ansible_port }}/tcp"
+    # because ansible might trigger the limit and lock us out.
+    # Instead we use AWS security groups to only allow SSH access from
+    # a specific set of IP addresses.
+
+    - name: Enable UFW with logging
+      become: true
+      community.general.ufw:
+        state: enabled
+        logging: low

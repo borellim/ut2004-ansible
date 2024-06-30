@@ -1,0 +1,18 @@
+- name: Apt update and upgrade
+  become: true
+  ansible.builtin.apt:
+    upgrade: true
+    update_cache: true
+    cache_valid_time: 86400  # One day
+  # TODO: only do this on first installation or when requested
+  # explicitly. Casually upgrading packages on production machines
+  # can cause outages.
+
+- name: Install quality-of-life packages
+  become: true
+  ansible.builtin.apt:
+    pkg:
+      - tree
+      - s-tui
+      - bashtop
+    state: present

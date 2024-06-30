@@ -1,0 +1,28 @@
+---
+- name: Determine/set SSH port
+  hosts: ut2004_servers
+  gather_facts: false
+  vars_files: secrets.yml
+  roles:
+    - role: custom_ssh_port
+  tags:
+    - custom_ssh_port
+    - always
+
+- name: Gather facts
+  hosts: ut2004_servers
+  gather_facts: true
+  vars_files: secrets.yml
+  tags: always
+
+- name: Apply roles
+  hosts: ut2004_servers
+  vars_files: secrets.yml
+  tags: roles
+  roles:
+    - role: common
+      tags: common
+    - role: ubuntu
+      tags: ubuntu
+    - role: ut2004_dedicated_server
+      tags: ut2004_dedicated_server

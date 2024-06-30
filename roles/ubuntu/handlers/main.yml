@@ -1,0 +1,30 @@
+# The name of the OpenSSH service in Ubuntu 24.04 is "ssh", not "sshd".
+# Note that these handlers are used from other modules too.
+
+- name: Verify SSH configuration
+  become: true
+  ansible.builtin.command:
+    cmd: "sshd -t"
+  changed_when: false
+  listen:
+    - restart_ssh
+    - reload_ssh
+
+# We need daemon-reload to apply the changes in Ubuntu 24
+# https://bugs.launchpad.net/ubuntu/+source/openssh/+bug/2069041
+- name: Restart SSH service
+  become: true
+  ansible.builtin.systemd_service:
+    name: ssh
+    daemon_reload: true
+    state: restarted
+  listen:
+    - restart_ssh
+
+- name: Reload SSH service
+  become: true
+  ansible.builtin.service:
+    name: ssh
+    state: reloaded
+  listen:
+    - reload_ssh

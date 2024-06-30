@@ -1,0 +1,10 @@
+# Syntax and options: https://ansible.readthedocs.io/projects/lint/configuring/
+
+warn_list:
+  - no-changed-when
+  - command-instead-of-shell
+  - command-instead-of-module
+  - var-naming[no-role-prefix]
+  - fqcn[action-core]
+  - yaml[new-line-at-end-of-file]
+  - no-handler

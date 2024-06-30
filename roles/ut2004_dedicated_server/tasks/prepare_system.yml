@@ -1,0 +1,29 @@
+- name: Prepare the system for installation
+  tags: prepare_system
+  block:
+
+    - name: Stop and disable fwupd to save RAM
+      become: true
+      ansible.builtin.service:
+        name: "{{ item }}"
+        enabled: false
+        state: stopped
+      with_items:
+        - fwupd
+        - fwupd-refresh
+        - fwupd-refresh.timer
+
+    - name: Create group for user {{ ut2004.unix_user }}
+      become: true
+      ansible.builtin.group:
+        name: "{{ ut2004.unix_user }}"
+        state: present
+
+    - name: Create user {{ ut2004.unix_user }}
+      become: true
+      ansible.builtin.user:
+        name: "{{ ut2004.unix_user }}"
+        group: "{{ ut2004.unix_user }}"
+        password: '!'  # disabled
+        home: "/home/{{ ut2004.unix_user }}"
+        shell: "/usr/bin/bash"

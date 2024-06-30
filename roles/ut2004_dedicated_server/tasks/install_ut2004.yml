@@ -1,0 +1,102 @@
+- name: Install ut2k4server
+  tags: install_ut2004
+  block:
+
+    - name: Download LinuxGSM
+      become: true
+      become_user: "{{ ut2004.unix_user }}"
+      ansible.builtin.shell:
+        cmd: >
+          curl -Lo linuxgsm.sh https://linuxgsm.sh
+          && chmod +x linuxgsm.sh
+          && bash linuxgsm.sh ut2k4server
+        chdir: "/home/{{ ut2004.unix_user }}"
+      tags: ut2004_install_lgsm
+
+    - name: Add i386 architecture  # noqa: command-instead-of-shell
+      become: true
+      ansible.builtin.shell:
+        cmd: "dpkg --add-architecture i386"
+      tags: ut2004_install_deps
+      # TODO: test with dpkg --print-foreign-architectures and --print-architecture
+
+    - name: Refresh Apt cache
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+      tags: ut2004_install_deps
+
+    # We install the dependencies by hand because the automatic dependency
+    # checking from LinuxGSM is not currently available for Ubuntu 24.04.
+    # The list of packages may not be exactly right, but it has been tested
+    # to work on Ubuntu 24.04 in June 2024.
+    - name: Install apt dependencies
+      become: true
+      ansible.builtin.apt:
+        package: [
+          bc, binutils, bsdmainutils, bzip2, ca-certificates,
+          cpio, curl, distro-info, file, gzip, hostname, jq, lib32gcc-s1, lib32stdc++6, netcat-openbsd,
+          pigz, python3, tar, tmux, unzip, util-linux, uuid-runtime, wget, xz-utils
+        ]
+        state: present
+      tags: ut2004_install_deps
+
+    # - name: Install apt dependencies via LinuxGSM
+    #   become: true
+    #   ansible.builtin.shell:
+    #     cmd: "/home/{{ ut2004.unix_user }}/ut2k4server install"
+    #   register: lgsm_deps_output
+    #   changed_when: "'Required dependencies already installed' not in lgsm_deps_output.stdout"
+    #   failed_when: "'LinuxGSM dependency checking currently unavailable' in lgsm_deps_output.stdout"
+
+    - name: Install UT2004 server via LinuxGSM  # noqa: command-instead-of-shell
+      become: true
+      become_user: "{{ ut2004.unix_user }}"
+      ansible.builtin.shell:
+        cmd: "./ut2k4server auto-install"
+        chdir: "/home/{{ ut2004.unix_user }}"
+      tags: ut2004_install_game
+      # TODO: this has no protection against overwriting an existing installation
+
+    - name: Copy LGSM game-specific configuration file (common.cfg)
+      become: true
+      ansible.builtin.copy:
+        src: "files/lgsm_common.cfg"
+        dest: "/home/{{ ut2004.unix_user }}/lgsm/config-lgsm/ut2k4server/common.cfg"
+        owner: "{{ ut2004.unix_user }}"
+        group: "{{ ut2004.unix_user }}"
+        mode: "0600"
+        backup: true
+      tags: ut2004_copy_config
+
+    - name: Copy server configuration file (ut2k4server.ini)
+      become: true
+      ansible.builtin.template:
+        src: "templates/ut2k4server.ini"
+        dest: "/home/{{ ut2004.unix_user }}/serverfiles/System/ut2k4server.ini"
+        owner: "{{ ut2004.unix_user }}"
+        group: "{{ ut2004.unix_user }}"
+        mode: "0600"
+        backup: true
+      tags: ut2004_copy_config
+
+    - name: Copy extra game files
+      become: true
+      ansible.builtin.unarchive:
+        src: "{{ ut2004.extra_files_path }}/{{ item }}.tar.gz"
+        dest: "/home/{{ ut2004.unix_user }}/serverfiles/"
+        owner: "{{ ut2004.unix_user }}"
+        group: "{{ ut2004.unix_user }}"
+        mode: "0755"
+      with_items:
+        - Animations
+        - KarmaData
+        - Maps
+        - Music
+        - ScreenShots
+        - Sounds
+        - Speech
+        - StaticMeshes
+        - System
+        - Textures
+      tags: ut2004_copy_extra_files

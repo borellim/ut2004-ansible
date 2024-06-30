@@ -1,0 +1,46 @@
+- name: Dynamic DNS
+  tags: dyn_dns
+  block:
+
+    - name: Download & extract NO-IP update client & make it executable
+      ansible.builtin.shell:
+        cmd: |
+          mkdir noip && cd noip
+          wget --content-disposition https://www.noip.com/download/linux/latest
+          tar xvf noip-duc_3.*.tar.gz
+          gunzip noip-duc_3.*/binaries/noip-duc_3.*_x86_64-musl.gz
+          cp noip-duc_3.*/binaries/noip-duc_3.*_x86_64-musl ~/noip/noip-duc
+          chmod +x ~/noip/noip-duc
+        creates: /home/{{ ansible_user }}/noip/noip-duc
+
+    - name: Copy environment file for NO-IP systemd service
+      ansible.builtin.template:
+        src: noip-duc.env
+        dest: /home/{{ ansible_user }}/noip/noip-duc.env
+        mode: '0600'
+
+    - name: Copy NO-IP systemd service
+      become: true
+      ansible.builtin.template:
+        src: noip-duc.service
+        dest: /etc/systemd/system/noip-duc.service
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Enable NO-IP systemd service
+      become: true
+      ansible.builtin.systemd_service:
+        name: noip-duc
+        daemon_reload: true
+        state: restarted
+
+    - name: Wait for NO-IP service to start
+      ansible.builtin.pause:
+        seconds: 2
+
+    - name: Check that the NO-IP service is active  # noqa: command-instead-of-module
+      become: true
+      ansible.builtin.command: systemctl is-active noip-duc
+      changed_when: false
+      tags: noip_check

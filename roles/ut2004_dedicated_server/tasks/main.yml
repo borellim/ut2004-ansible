@@ -1,0 +1,16 @@
+# code language=ansible
+
+- name: Set up firewall
+  ansible.builtin.import_tasks: firewall.yml
+
+- name: Prepare system
+  ansible.builtin.import_tasks: prepare_system.yml
+
+- name: Install UT2004 server
+  ansible.builtin.import_tasks: install_ut2004.yml
+
+- name: Set up dynamic DNS
+  ansible.builtin.import_tasks: dynamic_dns.yml
+
+- name: Additional hardening
+  ansible.builtin.import_tasks: hardening.yml
