@@ -18,8 +18,8 @@ This playbook and roles configure a Linux machine with an instance of the Unreal
     - The default username for Ubuntu server 24.04 is `ubuntu`.
 2. If you want a dynamic domain name, create an account on www.noip.com, then create a DNS record and a DDNS key.
     - Otherwise, use `--skip-tags=dyn_dns` later.
-3. Copy the file `hosts.yml.example` to `hosts.yml`, and customize it with the parameters of your target host.
-4. Copy the file `secrets.yml.example` to `secrets.yml`, and customize the variables within.
+3. Modify `hosts.yml` with the parameters of your target host.
+4. Modify `secrets.yml` with your desired configuration.
 5. Run `ansible-playbook ut2004.yml`.
     - Optionally, use `-vv` for verbose output.
     - Optionally, use `--tags=...` or `--skip-tags=...` to select or exclude steps.

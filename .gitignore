@@ -1,5 +1,3 @@
 ansible.log
 .vscode
 keys/*
-secrets.yml
-hosts.yml
