@@ -29,7 +29,8 @@ This playbook and roles configure a Linux machine with an instance of the Unreal
 - The playbook will change the OpenSSH listen port to a custom one (see `secrets.yml`). This is not a sufficient security measure on its own, but can reduce bruteforce attempts and log spam. Use `ssh -p <port>` to connect to the machine after this playbook has run.
 - Use `ansible-playbook ut2004.yml --list-tasks`: it's a very useful tree view of all the tasks that will be run.
 - To manually update the dynamic DNS: `~/noip/noip-duc -g <domain> -u <username> -p <password> -v --once`
-- [An Ansible cheat sheet by Digital Ocean](https://www.digitalocean.com/community/cheatsheets/how-to-use-ansible-cheat-sheet-guide)
+- unrealwiki.org has a lot of useful documentation, including [a wiki](https://wiki.unrealadmin.org/Main_Page) and [a reference for ut2k4server.ini](https://unrealadmin.org/server_ini_reference/ut2004)
+- Digital Ocean has [an Ansible cheat sheet](https://www.digitalocean.com/community/cheatsheets/how-to-use-ansible-cheat-sheet-guide)
 
 
 ## Missing features
