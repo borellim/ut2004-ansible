@@ -1,38 +1,81 @@
 - name: Further hardening
   tags: hardening
+  become: true
   block:
 
-    - name: Disable some insecure SSH options
-      become: true
-      ansible.builtin.lineinfile:
-        path: /etc/ssh/sshd_config.d/90-ansible.conf
-        regexp: '^{{ item.key }} '
-        line: '{{ item.key }} {{ item.value }}'
-        insertafter: EOF
-        state: present
-        validate: 'sshd -tf %s'
-        owner: root
-        group: root
-        mode: '0600'
-        create: true
-      with_dict:
-        - 'PermitRootLogin': 'no'
-        - 'PermitEmptyPasswords': 'no'
-        - 'PasswordAuthentication': 'no'
-        - 'ChallengeResponseAuthentication': 'no'
-        - 'KbdInteractiveAuthentication': 'no'
-      notify: reload_ssh
-      # Note that AWS uses PAM, so we cannot set UsePAM=no
+    - name: SSH Hardening
+      tags: ssh_hardening
+      block:
 
-    - name: Enable passwordless sudo for user {{ ansible_user }}
-      become: true
-      ansible.builtin.lineinfile:
-        path: /etc/sudoers.d/90-Ansible
-        regexp: '^{{ ansible_user }}'
-        line: '{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL'
-        state: present
-        owner: root
-        group: root
-        mode: '0440'
-        create: true
-        validate: 'visudo -cf %s'
+        - name: Disable some insecure SSH options
+          ansible.builtin.lineinfile:
+            path: /etc/ssh/sshd_config.d/90-ansible.conf
+            regexp: '^{{ item.key }} '
+            line: '{{ item.key }} {{ item.value }}'
+            insertafter: EOF
+            state: present
+            validate: 'sshd -tf %s'
+            owner: root
+            group: root
+            mode: '0600'
+            create: true
+          with_dict:
+            - 'PermitRootLogin': 'no'
+            - 'PermitEmptyPasswords': 'no'
+            - 'PasswordAuthentication': 'no'
+            - 'ChallengeResponseAuthentication': 'no'
+            - 'KbdInteractiveAuthentication': 'no'
+          notify: reload_ssh
+          # Note that AWS uses PAM, so we cannot set UsePAM=no
+
+        - name: Enable passwordless sudo for user {{ ansible_user }}
+          ansible.builtin.lineinfile:
+            path: /etc/sudoers.d/90-Ansible
+            regexp: '^{{ ansible_user }}'
+            line: '{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL'
+            state: present
+            owner: root
+            group: root
+            mode: '0440'
+            create: true
+            validate: 'visudo -cf %s'
+
+    - name: Fail2ban
+      tags: fail2ban
+      block:
+
+        - name: Install fail2ban
+          become: true
+          ansible.builtin.apt:
+            pkg: fail2ban
+            state: present
+
+        - name: Disable default sshd jail
+          community.general.ini_file:
+            path: /etc/fail2ban/jail.d/defaults-debian.conf
+            section: "sshd"
+            option: "enabled"
+            value: "false"
+            create: false
+
+        - name: Copy fail2ban filter file
+          ansible.builtin.template:
+            src: fail2ban/filter_nginx_401_407.conf
+            dest: /etc/fail2ban/filter.d/nginx-401-407.conf
+            owner: root
+            group: root
+            mode: '0600'
+
+        - name: Copy fail2ban jail for nginx/ut2004
+          ansible.builtin.template:
+            src: fail2ban/jail_nginx_ut2004_webadmin.conf
+            dest: /etc/fail2ban/jail.d/nginx-ut2004-webadmin.conf
+            owner: root
+            group: root
+            mode: '0600'
+
+        - name: Start and reload fail2ban
+          ansible.builtin.service:
+            name: fail2ban
+            state: reloaded
+            enabled: true

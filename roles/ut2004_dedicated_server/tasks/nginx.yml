@@ -1,0 +1,50 @@
+- name: Install Nginx as reverse proxy
+  tags: nginx
+  become: true
+  block:
+
+    - name: Install Nginx
+      ansible.builtin.apt:
+        pkg: nginx
+        state: present
+      tags: nginx_install
+
+    - name: Disable default Nginx site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      register: nginx_default_site
+
+    - name: Copy Nginx site
+      ansible.builtin.template:
+        src: nginx/ut2004_webadmin
+        dest: /etc/nginx/sites-available/ut2004_webadmin
+        mode: '0600'
+      register: nginx_site
+
+    - name: Enable Nginx site
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/ut2004_webadmin
+        path: /etc/nginx/sites-enabled/ut2004_webadmin
+        state: link
+        mode: '0600'
+      register: nginx_site_link
+
+    - name: Test Nginx configuration
+      ansible.builtin.shell:
+        cmd: "nginx -t"
+      changed_when: false
+
+    - name: Start Nginx service and reload configuration
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
+        enabled: true
+      # when: nginx_site.changed or nginx_site_link.changed or nginx_default_site.changed
+
+    - name: Allow Nginx port through firewall
+      community.general.ufw:
+        rule: allow
+        from: any
+        port: "{{ nginx.public_port }}"
+        proto: tcp

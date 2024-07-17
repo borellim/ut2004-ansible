@@ -12,5 +12,8 @@
 - name: Set up dynamic DNS
   ansible.builtin.import_tasks: dynamic_dns.yml
 
+- name: Set up reverse proxy to web admin
+  ansible.builtin.import_tasks: nginx.yml
+
 - name: Additional hardening
   ansible.builtin.import_tasks: hardening.yml

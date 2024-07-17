@@ -6,7 +6,7 @@ ports=7777,7778,7787,10777/udp
 [ut2004-webadmin]
 title=Unreal Tournament 2004 Web Admin
 description=Web admin ports
-ports=8075/tcp
+ports={{ ut2004.web_admin_port }}/tcp
 
 # Ports:
 # 7777 UDP (Game port)

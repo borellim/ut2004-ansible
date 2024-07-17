@@ -17,7 +17,7 @@
 
     - name: Upload UT2004 application profile to UFW
       become: true
-      ansible.builtin.copy:
+      ansible.builtin.template:
         src: "ufw_app_ut2004"
         dest: "/etc/ufw/applications.d/ut2004"
         mode: "0600"
