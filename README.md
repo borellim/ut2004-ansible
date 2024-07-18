@@ -1,15 +1,19 @@
 # Ansible playbook for UT2004 dedicated server
 
-This playbook and roles configure a Linux machine with an instance of the Unreal Tournament 2004 dedicated server. These are the rough steps that will be taken:
+This playbook / role configures a Linux machine with an instance of the Unreal Tournament 2004 dedicated server. These are the rough steps that will be taken:
 
 - prepare the system with common settings;
 - configure firewall rules via UFW;
 - install required dependencies;
 - download and install the UT2004 server via [LinuxGSM](https://linuxgsm.com/);
 - copy a custom `ut2k4server.ini` configuration file;
+- install cron jobs to monitor the game and restart it if needed, and to start the game at bootup;
 - copy some extra custom game data;
 - configure the No-IP dynamic DNS service;
-- enable some hardening options.
+- install and configure Nginx as reverse proxy for the UT2004 web admin interface;
+- install fail2ban and have it monitor Nginx logs for brute-force attempts;
+- enable some SSH hardening options;
+- start the game.
 
 ## Instructions
 
@@ -20,27 +24,70 @@ This playbook and roles configure a Linux machine with an instance of the Unreal
     - Otherwise, use `--skip-tags=dyn_dns` later.
 3. Modify `hosts.yml` with the parameters of your target host.
 4. Modify `secrets.yml` with your desired configuration.
-5. Run `ansible-playbook ut2004.yml`.
-    - Optionally, use `-vv` for verbose output.
-    - Optionally, use `--tags=...` or `--skip-tags=...` to select or exclude steps.
+5. Run `ansible-playbook ut2004.yml`. Some useful options:
+    - `-vv` for verbose output;
+    - `--tags=...` or `--skip-tags=...` to select or exclude steps;
+    - `--list-tasks` to list every task that will be run.
 
 ## Notes and tips
 
-- The playbook will change the OpenSSH listen port to a custom one (see `secrets.yml`). This is not a sufficient security measure on its own, but can reduce bruteforce attempts and log spam. Use `ssh -p <port>` to connect to the machine after this playbook has run.
-- Use `ansible-playbook ut2004.yml --list-tasks`: it's a very useful tree view of all the tasks that will be run.
+- The playbook will change the OpenSSH listen port to a custom one (see `secrets.yml`). This is not a sufficient security measure on its own, but can reduce bruteforce attempts and log spam. Use `ssh -p <port>` or `scp -P <port>` to connect to the machine after this playbook has run.
 - To manually update the dynamic DNS: `~/noip/noip-duc -g <domain> -u <username> -p <password> -v --once`
 - unrealwiki.org has a lot of useful documentation, including [a wiki](https://wiki.unrealadmin.org/Main_Page) and [a reference for ut2k4server.ini](https://unrealadmin.org/server_ini_reference/ut2004)
 - Digital Ocean has [an Ansible cheat sheet](https://www.digitalocean.com/community/cheatsheets/how-to-use-ansible-cheat-sheet-guide)
-
+- [See below](#operation) for some useful commands
 
 ## Missing features
 
 - skip download and install ut2004 and linuxgsm if already installed
 - why fwupd service shows as always changed?
 - have a task dedicated to upgrading system packages, and modify role ubuntu to only upgrade packages when requested explicitly. Also upgrade linuxgsm and noip-duc.
-- Run ut2k4 server as a service on bootup? (https://docs.linuxgsm.com/configuration/running-on-boot)
 - fail2ban + ssh jail = block ssh spam
-- fail2ban + reverse proxy + nginx jail = blocks password brute-force guessing on web admin
 - monitor, summarize, alert unauthorized access attempts
 - add cron job for "./ut2k4server monitor" (to encourage support & development of linuxgsm)
 - enable AWS EC2 Connect (in case SSH breaks)
+- close port 8075 on UFW (we already proxy it on port 80), but only if nginx is configured.
+
+## Operation
+
+### Starting & stopping
+
+The game server will start at boot. To start/stop manually:
+```
+sudo su - ut2004
+./ut2k4server start
+./ut2k4server stop
+./ut2k4server details
+```
+
+## Checking game console
+
+```
+# Press "CTRL+b" then "d", NOT "CTRL-C"!
+./ut2k4server console
+```
+
+### CPU/network usage
+
+```
+bashtop
+s-tui
+```
+
+### Cron logs
+
+```
+sudo cat ~ut2004/cron.log
+sudo tail -f ~ut2004/cron.log
+sudo less [-R|-r] ~ut2004/cron.log
+```
+
+### Fail2ban
+
+Check status:
+```
+sudo systemctl status fail2ban
+sudo fail2ban-client status
+sudo fail2ban-client status ut2004-webadmin
+grep "Ban" /var/log/fail2ban.log
+```

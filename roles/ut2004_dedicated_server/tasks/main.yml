@@ -17,3 +17,6 @@
 
 - name: Additional hardening
   ansible.builtin.import_tasks: hardening.yml
+
+- name: Start UT2004 game server
+  ansible.builtin.import_tasks: start_ut2004.yml

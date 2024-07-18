@@ -1,0 +1,7 @@
+- name: Start UT2004 game server
+  become: true
+  become_user: "{{ ut2004.unix_user }}"
+  ansible.builtin.shell:
+    cmd: "./ut2k4server start"
+    chdir: "/home/{{ ut2004.unix_user }}"
+  tags: ut2004_start_game

@@ -100,3 +100,21 @@
         - System
         - Textures
       tags: ut2004_copy_extra_files
+
+    - name: Install cron job to monitor game server
+      become: true
+      ansible.builtin.cron:
+        name: "ut2k4server monitor"
+        user: "{{ ut2004.unix_user }}"
+        minute: "*/5"
+        job: "(date; /home/{{ ut2004.unix_user }}/ut2k4server monitor) >> /home/{{ ut2004.unix_user }}/cron.log 2>/dev/null"
+      tags: lgsm_cron
+
+    - name: Install cron job to start game server at boot
+      become: true
+      ansible.builtin.cron:
+        name: "ut2k4server start at boot"
+        user: "{{ ut2004.unix_user }}"
+        special_time: reboot
+        job: "(date; /home/{{ ut2004.unix_user }}/ut2k4server start) >> /home/{{ ut2004.unix_user }}/cron.log 2>/dev/null"
+      tags: lgsm_cron
