@@ -1,19 +1,20 @@
 # Ansible playbook for UT2004 dedicated server
 
-This playbook / role configures a Linux machine with an instance of the Unreal Tournament 2004 dedicated server. These are the rough steps that will be taken:
+This playbook / role configures a Linux machine with an instance of the Unreal Tournament 2004 dedicated server. These are the rough steps that it takes:
 
 - prepare the system with common settings;
 - configure firewall rules via UFW;
 - install required dependencies;
 - download and install the UT2004 server via [LinuxGSM](https://linuxgsm.com/);
 - copy a custom `ut2k4server.ini` configuration file;
-- install cron jobs to monitor the game and restart it if needed, and to start the game at bootup;
+- install cron jobs start the game at boot, and to monitor/restart the game on crash;
 - copy some extra custom game data;
 - configure the No-IP dynamic DNS service;
 - install and configure Nginx as reverse proxy for the UT2004 web admin interface;
 - install fail2ban and have it monitor Nginx logs for brute-force attempts;
 - enable some SSH hardening options;
-- start the game.
+- start the game server process.
+
 
 ## Instructions
 
@@ -29,24 +30,14 @@ This playbook / role configures a Linux machine with an instance of the Unreal T
     - `--tags=...` or `--skip-tags=...` to select or exclude steps;
     - `--list-tasks` to list every task that will be run.
 
+
 ## Notes and tips
 
 - The playbook will change the OpenSSH listen port to a custom one (see `secrets.yml`). This is not a sufficient security measure on its own, but can reduce bruteforce attempts and log spam. Use `ssh -p <port>` or `scp -P <port>` to connect to the machine after this playbook has run.
 - To manually update the dynamic DNS: `~/noip/noip-duc -g <domain> -u <username> -p <password> -v --once`
 - unrealwiki.org has a lot of useful documentation, including [a wiki](https://wiki.unrealadmin.org/Main_Page) and [a reference for ut2k4server.ini](https://unrealadmin.org/server_ini_reference/ut2004)
 - Digital Ocean has [an Ansible cheat sheet](https://www.digitalocean.com/community/cheatsheets/how-to-use-ansible-cheat-sheet-guide)
-- [See below](#operation) for some useful commands
-
-## Missing features
-
-- skip download and install ut2004 and linuxgsm if already installed
-- why fwupd service shows as always changed?
-- have a task dedicated to upgrading system packages, and modify role ubuntu to only upgrade packages when requested explicitly. Also upgrade linuxgsm and noip-duc.
-- fail2ban + ssh jail = block ssh spam
-- monitor, summarize, alert unauthorized access attempts
-- add cron job for "./ut2k4server monitor" (to encourage support & development of linuxgsm)
-- enable AWS EC2 Connect (in case SSH breaks)
-- close port 8075 on UFW (we already proxy it on port 80), but only if nginx is configured.
+- [See below](#operation) for some useful operative commands
 
 ## Operation
 
@@ -60,11 +51,11 @@ sudo su - ut2004
 ./ut2k4server details
 ```
 
-## Checking game console
+### Checking game console
 
 ```
-# Press "CTRL+b" then "d", NOT "CTRL-C"!
 ./ut2k4server console
+# To quit, press "CTRL+b" then "d", NOT "CTRL-C"!
 ```
 
 ### CPU/network usage
@@ -74,7 +65,13 @@ bashtop
 s-tui
 ```
 
-### Cron logs
+### Game settings and LinuxGSM settings
+
+Most settings are stored in `~ut2004/serverfiles/System/ut2k4server.ini`. Some settings are passed via command-line arguments, which are stored in `~ut2004/lgsm/config-lgsm/common.cfg`. Files in these folder also contain settings for LinuxGSM, such as monitor settings.
+
+### Logs
+
+LinuxGSM cron jobs:
 
 ```
 sudo cat ~ut2004/cron.log
@@ -82,12 +79,37 @@ sudo tail -f ~ut2004/cron.log
 sudo less [-R|-r] ~ut2004/cron.log
 ```
 
-### Fail2ban
+Fail2ban:
 
-Check status:
 ```
 sudo systemctl status fail2ban
 sudo fail2ban-client status
 sudo fail2ban-client status ut2004-webadmin
 grep "Ban" /var/log/fail2ban.log
 ```
+
+Nginx:
+
+```
+less /var/log/nginx/access.log
+egrep -v "ServerAdmin" /var/log/nginx/access.log
+```
+
+SSH server (note that it uses socket-based activation):
+
+```
+journalctl -t sshd -f
+journalctl -u ssh
+```
+
+
+## Missing features
+
+- skip download and install ut2004 and linuxgsm if already installed
+- why fwupd service shows as always changed?
+- have a cron job to install security updates daily, but also pin sensitive packages to a specific version.
+- have a task dedicated to upgrading system packages, and modify role ubuntu to only upgrade packages when requested explicitly. Also upgrade linuxgsm and noip-duc.
+- fail2ban + ssh jail = block ssh spam
+- enable AWS EC2 Connect (in case SSH breaks)
+- monitor, summarize, alert unauthorized access attempts
+- close port 8075 on UFW (we already proxy it on port 80), but only if nginx is configured.
