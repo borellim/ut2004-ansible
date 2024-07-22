@@ -1,6 +1,6 @@
 # Ansible playbook for UT2004 dedicated server
 
-This playbook / role configures a Linux machine with an instance of the Unreal Tournament 2004 dedicated server. These are the rough steps that it takes:
+This playbook / role configures a Linux machine with an instance of the Unreal Tournament 2004 dedicated server. It will take the following steps (roughly):
 
 - prepare the system with common settings;
 - configure firewall rules via UFW;
@@ -14,6 +14,8 @@ This playbook / role configures a Linux machine with an instance of the Unreal T
 - install fail2ban and have it monitor Nginx logs for brute-force attempts;
 - enable some SSH hardening options;
 - start the game server process.
+
+<center><img src="docs/diagram.png" alt="System diagram" width="80%"/></center>
 
 
 ## Instructions
