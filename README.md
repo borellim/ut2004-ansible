@@ -104,6 +104,19 @@ journalctl -t sshd -f
 journalctl -u ssh
 ```
 
+To backup all logs:
+
+```
+mkdir logs
+cd logs
+cp /var/log/nginx/access.log* .
+cp /var/log/fail2ban.log* .
+journalctl -u ssh > journalclt-ssh.log
+journalctl -t sshd > journalclt-sshd.log
+sudo cp -r ~ut2004/log lgsm-logs
+sudo cp ~ut2004/cron.log .
+sudo chown -R ubuntu:ubuntu .
+```
 
 ## Missing features
 
