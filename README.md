@@ -15,7 +15,9 @@ This playbook / role configures a Linux machine with an instance of the Unreal T
 - enable some SSH hardening options;
 - start the game server process.
 
-<center><img src="docs/diagram.png" alt="System diagram" width="80%"/></center>
+<p align="center">
+  <img src="docs/diagram.png" alt="System diagram" width="90%"/>
+</p>
 
 
 ## Instructions
